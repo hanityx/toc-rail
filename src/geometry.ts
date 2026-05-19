@@ -105,6 +105,7 @@ function calculateAfterFade(
     return { opacity: 1, offset: 0 };
   }
 
+  // Fade by the rail's real bottom edge, not the viewport, so short rails do not linger past content.
   const railBottom = getRectBottom(metrics.railRect);
   const distance = getRectBottom(metrics.contentRect) - railBottom;
   const fadeDistance = Math.max(options.edge?.afterFadeDistance ?? DEFAULT_AFTER_FADE_DISTANCE, 1);
@@ -118,6 +119,7 @@ function calculateAfterFade(
 function calculateProgress(metrics: TocRailMetrics, topOffset: number): number {
   const contentTop = metrics.contentRect.top + metrics.scrollY - topOffset;
   const contentEnd = contentTop + Math.max(metrics.scrollHeight || metrics.contentRect.height, 1);
+  // The midpoint feels closer to reading progress than the very top of the viewport.
   const midpoint = metrics.scrollY + metrics.innerHeight / 2;
   return clamp((midpoint - contentTop) / Math.max(contentEnd - contentTop, 1), 0, 1);
 }

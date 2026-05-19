@@ -41,6 +41,7 @@ function toHeadingData(
 
   const element = heading as HTMLElement;
   if (!element.id) {
+    // Generated ids keep anchors working; stable author-provided ids are still safer for hydrated apps.
     element.id = createUniqueId(options.idPrefix ?? DEFAULT_ID_PREFIX, index, win.document);
   }
 

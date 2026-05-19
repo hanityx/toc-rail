@@ -62,6 +62,7 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
   const resizeObserver =
     typeof ResizeObserverCtor === "function" ? new ResizeObserverCtor(() => scheduleRefresh()) : null;
 
+  // Keep measurements fresh after layout shifts. Images are the fallback for older DOMs.
   resizeObserver?.observe(content);
   if (!resizeObserver) {
     content.querySelectorAll("img").forEach((image) => {
@@ -75,6 +76,7 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
   win.addEventListener("resize", scheduleRefresh, { passive: true });
   win.addEventListener("load", handleLoad, { once: true });
   (doc as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready.then(() => {
+    // Web fonts can move headings after first paint, so take one more pass when they settle.
     if (mounted) scheduleRefresh();
   });
 
@@ -105,6 +107,7 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
 
   function refresh(): void {
     if (!mounted) return;
+    // Rebuild the outline only on refresh; scroll updates reuse cached heading positions.
     headingData = refreshHeadingPositions(collectHeadings(content, options, win), win);
     itemData = renderHeadingItems(view, doc, headingData, options);
     update();

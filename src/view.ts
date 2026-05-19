@@ -28,6 +28,7 @@ export function createTocRailView(doc: Document, options: TocRailOptions): TocRa
   root.dataset.tocRail = "true";
   root.dataset.tocRailState = "visible";
   if (progressOnly) {
+    // Progress-only mode should not leave an empty navigation landmark behind.
     root.dataset.tocRailMode = "progress";
     root.setAttribute("aria-hidden", "true");
   }
@@ -164,6 +165,7 @@ function setRailInteractive(
   items: readonly TocRailItem[],
   isInteractive: boolean
 ): void {
+  // Hidden rails stay out of keyboard order, even while CSS is fading them.
   (root as HTMLElement & { inert?: boolean }).inert = !isInteractive;
   items.forEach(({ link }) => {
     if (isInteractive) {
