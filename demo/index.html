@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>toc-rail demo</title>
+    <link rel="stylesheet" href="../style.css" />
+    <style>
+      :root {
+        color-scheme: light;
+        scroll-behavior: smooth;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        margin: 0;
+        background: #fff;
+        color: #111;
+        font-family:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.65;
+      }
+
+      main {
+        width: min(100%, 1080px);
+        margin: 0 auto;
+        padding: 5rem 1.5rem 40vh;
+      }
+
+      article {
+        width: min(100%, 640px);
+      }
+
+      header {
+        margin: 0 0 4.5rem;
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e5e5e5;
+      }
+
+      .eyebrow {
+        margin: 0 0 0.75rem;
+        color: #777;
+        font-size: 0.78rem;
+        font-weight: 650;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        color: #111;
+        letter-spacing: 0;
+        line-height: 1.15;
+      }
+
+      h1 {
+        max-width: 14em;
+        margin: 0;
+        font-size: clamp(2.1rem, 4vw, 3.4rem);
+        font-weight: 680;
+      }
+
+      h2 {
+        margin: 5rem 0 0.8rem;
+        padding-top: 0.4rem;
+        border-top: 1px solid #ededed;
+        font-size: 1.55rem;
+      }
+
+      h3 {
+        margin: 2.2rem 0 0.5rem;
+        font-size: 1rem;
+        font-weight: 720;
+      }
+
+      p,
+      li {
+        color: #424242;
+        font-size: 0.98rem;
+      }
+
+      p {
+        margin: 0.85rem 0;
+      }
+
+      ul {
+        margin: 1rem 0 0;
+        padding-left: 1.1rem;
+      }
+
+      li + li {
+        margin-top: 0.35rem;
+      }
+
+      a {
+        color: #111;
+      }
+
+      code {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fafafa;
+        color: #111;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.9em;
+        padding: 0.08rem 0.24rem;
+      }
+
+      pre {
+        overflow: auto;
+        margin: 1rem 0 0;
+        border: 1px solid #e1e1e1;
+        border-radius: 6px;
+        background: #fafafa;
+        padding: 1rem;
+      }
+
+      pre code {
+        border: 0;
+        background: transparent;
+        padding: 0;
+      }
+
+      .lede {
+        max-width: 35rem;
+        margin: 1rem 0 0;
+        color: #333;
+        font-size: 1.05rem;
+      }
+
+      .quick-list {
+        margin-top: 1.5rem;
+        color: #444;
+      }
+
+      .toc-rail {
+        /* Layout only. Color stays on the package default tokens from style.css. */
+        --toc-rail-right: max(1.5rem, calc((100vw - 1080px) / 2));
+        --toc-rail-top: max(88px, 16vh);
+        --toc-rail-list-bottom-gap: 124px;
+        --toc-rail-base-opacity: 1;
+      }
+
+      @media (max-width: 1139px) {
+        main {
+          padding-top: 3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <article id="demo-article">
+        <header>
+          <p class="eyebrow">toc-rail demo</p>
+          <h1>Reading rail for long articles</h1>
+          <p class="lede">
+            Build a fixed outline from article headings and show reading progress beside the page.
+          </p>
+          <ul class="quick-list">
+            <li>Vanilla TypeScript, ESM-only, zero runtime dependencies</li>
+            <li>Import the CSS and call <code>mountTocRail()</code></li>
+            <li>Show the rail on wide screens and keep mobile focused on the article</li>
+          </ul>
+        </header>
+
+        <h2 id="setup">Install</h2>
+        <p>Import the package and the default CSS.</p>
+
+        <h3 id="setup-imports">Import</h3>
+        <pre><code>import { mountTocRail } from "toc-rail";
+import "toc-rail/style.css";
+
+mountTocRail({
+  content: "article",
+  headings: "article h2[id], article h3[id]"
+});</code></pre>
+
+        <h3 id="setup-content">Content requirements</h3>
+        <p>Headings used by the rail should have stable <code>id</code> values.</p>
+
+        <h2 id="scroll-behavior">Scroll behavior</h2>
+        <p>The progress line and active link update as the reader moves through the article.</p>
+
+        <h3 id="scroll-active">Active state</h3>
+        <p>
+          The active item receives <code>is-active</code>,
+          <code>data-toc-rail-active="true"</code>,
+          and <code>aria-current="location"</code>.
+        </p>
+
+        <h3 id="scroll-clicks">Anchor links</h3>
+        <p>Rail links are normal fragment anchors. Use <code>scroll-margin-top</code> for fixed headers.</p>
+
+        <h2 id="visual-states">Styling</h2>
+        <p>Change color, width, and placement with CSS variables.</p>
+        <pre><code>.toc-rail {
+  --toc-rail-accent: #197ca8;
+  --toc-rail-width: 184px;
+  --toc-rail-right: 2rem;
+  --toc-rail-top: max(96px, 18vh);
+}</code></pre>
+
+        <h3 id="visual-before">Before and after content</h3>
+        <p>By default, the rail hides before the article starts and after it ends.</p>
+
+        <h3 id="visual-bottom">Bottom fade</h3>
+        <p>The rail fades near the end of the article so it does not hang beside footer content.</p>
+
+        <h2 id="progress-only">Progress only</h2>
+        <p>Pass <code>headings: false</code> when you only need reading progress.</p>
+        <pre><code>mountTocRail({
+  content: "article",
+  headings: false,
+  title: false
+});</code></pre>
+
+        <h3 id="progress-css">CSS-first styling</h3>
+        <p>JavaScript manages DOM, active state, and progress variables. Visual design stays in CSS.</p>
+
+        <h2 id="responsive">Responsive behavior</h2>
+        <p>The rail hides automatically below <code>minWidth</code>.</p>
+
+        <h3 id="responsive-column">Narrow screens</h3>
+        <p>This demo hides the right rail below 1140px.</p>
+
+        <h2 id="lifecycle">Lifecycle</h2>
+        <p><code>mountTocRail()</code> returns a handle for route changes and dynamic content.</p>
+        <pre><code>const rail = mountTocRail({ content: "article" });
+
+rail.refresh();
+rail.update();
+rail.unmount();</code></pre>
+
+        <h3 id="lifecycle-refresh">refresh()</h3>
+        <p>Call after headings or article height change.</p>
+
+        <h3 id="lifecycle-unmount">unmount()</h3>
+        <p>Call before leaving the page to remove listeners, timers, frames, and DOM.</p>
+
+        <h2 id="end-boundary">Final check</h2>
+        <p>Check rail navigation, active state, progress, and narrow-screen hiding before publishing.</p>
+      </article>
+    </main>
+    <script type="module">
+      import { mountTocRail } from "../dist/index.js";
+
+      mountTocRail({
+        content: "#demo-article",
+        headings: "#demo-article h2[id], #demo-article h3[id]",
+        title: "Contents",
+        minWidth: 1140,
+        topOffset: 56,
+        activeOffset: 40,
+        edge: {
+          hideBefore: false,
+          beforeOffset: 92,
+          afterFadeDistance: 220
+        }
+      });
+    </script>
+  </body>
+</html>

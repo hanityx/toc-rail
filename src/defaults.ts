@@ -1,0 +1,10 @@
+export const DEFAULT_ACTIVE_CLASS = "is-active";
+export const DEFAULT_ACTIVE_OFFSET = 32;
+export const DEFAULT_AFTER_FADE_DISTANCE = 160;
+export const DEFAULT_BEFORE_OFFSET = 120;
+export const DEFAULT_HEADING_SELECTOR = "h2[id], h3[id]";
+export const DEFAULT_ID_PREFIX = "toc-rail-section";
+export const DEFAULT_MIN_WIDTH = 1140;
+export const DEFAULT_SCROLLING_CLASS_DURATION = 1400;
+export const DEFAULT_TOP_OFFSET = 52;
+export const DEFAULT_EDGE_TRANSLATE = 8;

@@ -1,0 +1,62 @@
+{
+  "name": "toc-rail",
+  "version": "0.1.0",
+  "description": "Sticky reading rail with table-of-contents, scroll progress, and active heading state. Vanilla, ESM, zero dependencies.",
+  "type": "module",
+  "license": "MIT",
+  "author": "hanityx",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hanityx/toc-rail.git"
+  },
+  "homepage": "https://github.com/hanityx/toc-rail#readme",
+  "bugs": {
+    "url": "https://github.com/hanityx/toc-rail/issues"
+  },
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "./style.css"
+  ],
+  "files": [
+    "dist",
+    "assets",
+    "style.css",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "toc",
+    "table-of-contents",
+    "scrollspy",
+    "reading-progress",
+    "scroll",
+    "progress",
+    "outline",
+    "sidebar",
+    "nav",
+    "blog",
+    "article",
+    "vanilla",
+    "markdown"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./style.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "playwright test",
+    "check": "npm run build && npm test && npm run test:browser",
+    "prepack": "npm run build && npm test",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "typescript": "^5.9.3"
+  }
+}
