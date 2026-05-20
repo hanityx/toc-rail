@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3
+
+- Fixed rail sizing at shorter viewport heights so the panel and list stay inside the viewport.
+- Hid the internal native scrollbar while keeping long outlines scrollable.
+- Restored the default polar accent color and kept a small visible progress mark at the top.
+- Tuned the public demo content and browser coverage for dense outlines and overflow behavior.
+
 ## 0.1.2
 
 - Hardened progress-only mode so the visual rail has a stable track height.
