@@ -1,5 +1,5 @@
 .toc-rail {
-  --toc-rail-accent: #197ca8;
+  --toc-rail-accent: #0066cc;
   --toc-rail-line: rgba(24, 31, 36, 0.14);
   --toc-rail-muted: rgba(24, 31, 36, 0.62);
   --toc-rail-faint: rgba(24, 31, 36, 0.34);
@@ -21,6 +21,7 @@
   --toc-rail-nav-height: 52px;
   --toc-rail-panel-bottom-gap: 5rem;
   --toc-rail-list-bottom-gap: 180px;
+  --toc-rail-list-end-space: 3.5rem;
   --toc-rail-duration-fast: 150ms;
   --toc-rail-duration-normal: 250ms;
   --toc-rail-fade-duration: 500ms;
@@ -111,7 +112,7 @@
 .toc-rail__progress {
   position: absolute;
   top: 4px;
-  bottom: 4px;
+  bottom: calc(4px + var(--toc-rail-list-end-space));
   left: 0;
   width: 1px;
   background: var(--toc-rail-line);
@@ -126,7 +127,11 @@
   opacity: 0.9;
   transform: scaleY(var(--toc-rail-progress, 0));
   transform-origin: top;
-  transition: transform 120ms linear;
+  transition: transform var(--toc-rail-duration-fast) linear;
+}
+
+.toc-rail.is-scrolling .toc-rail__progress-fill {
+  transition: none;
 }
 
 .toc-rail__list {
@@ -136,7 +141,7 @@
   flex-direction: column;
   gap: 2px;
   margin: 0;
-  padding: 0;
+  padding: 0 0 var(--toc-rail-list-end-space);
   overflow: auto;
   list-style: none;
   scrollbar-color: var(--toc-rail-faint) transparent;
@@ -194,4 +199,13 @@
   .toc-rail__progress-fill {
     transition: none;
   }
+}
+
+[data-theme='dark'] .toc-rail {
+  --toc-rail-accent: #60a5fa;
+  --toc-rail-line: rgba(255, 255, 255, 0.12);
+  --toc-rail-muted: rgba(255, 255, 255, 0.65);
+  --toc-rail-faint: rgba(255, 255, 255, 0.35);
+  --toc-rail-text: #e2e8f0;
+  --toc-rail-title: rgba(255, 255, 255, 0.4);
 }

@@ -1,4 +1,9 @@
-import { DEFAULT_MIN_WIDTH, DEFAULT_SCROLLING_CLASS_DURATION } from "./defaults.js";
+import {
+  DEFAULT_ACTIVE_OFFSET,
+  DEFAULT_MIN_WIDTH,
+  DEFAULT_SCROLLING_CLASS_DURATION,
+  DEFAULT_TOP_OFFSET
+} from "./defaults.js";
 import { computeVisualState, findActiveHeadingIndex, measureRailMetrics } from "./geometry.js";
 import { collectHeadings, refreshHeadingPositions } from "./headings.js";
 import type { InternalTocRailHeading, TocRailInstance, TocRailItem, TocRailOptions } from "./types.js";
@@ -85,11 +90,12 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
   return handle;
 
   function scheduleUpdate(): void {
-    if (!mounted || animationFrame) return;
+    if (!mounted) return;
+    markScrolling();
+    if (animationFrame) return;
     animationFrame = win.requestAnimationFrame(() => {
       animationFrame = 0;
       update();
-      markScrolling();
     });
   }
 
@@ -127,8 +133,22 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
     const metrics = measureRailMetrics(content, view.root, win);
     const visualState = computeVisualState(metrics, options);
     const activeIndex = findActiveHeadingIndex(headingData, win, options);
+    syncActiveItemVisibility(view, itemData, activeIndex);
+    const progress =
+      itemData.length > 0
+        ? getOutlineProgress(
+            view,
+            itemData,
+            headingData,
+            activeIndex,
+            metrics,
+            win,
+            options,
+            visualState.progress
+          )
+        : visualState.progress;
 
-    currentProgress = visualState.progress;
+    currentProgress = progress;
     currentActiveId = applyActiveItem(itemData, activeIndex, options);
     applyVisualState(
       view,
@@ -137,7 +157,7 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
       visualState.edgeOpacity,
       visualState.edgeOffset
     );
-    applyProgress(view, currentProgress);
+    applyProgress(view, progress);
   }
 
   function markScrolling(): void {
@@ -167,4 +187,84 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
 
 function resolveElement(target: string | Element, doc: Document): Element | null {
   return typeof target === "string" ? doc.querySelector(target) : target;
+}
+
+function syncActiveItemVisibility(
+  view: ReturnType<typeof createTocRailView>,
+  items: readonly TocRailItem[],
+  activeIndex: number
+): void {
+  if (activeIndex < 0) return;
+
+  const activeItem = items[activeIndex]?.item;
+  const list = view.list;
+  const listHeight = list.clientHeight;
+  if (!activeItem || listHeight <= 0 || list.scrollHeight <= listHeight) return;
+
+  const listRect = list.getBoundingClientRect();
+  const itemRect = activeItem.getBoundingClientRect();
+  const buffer = Math.min(40, listHeight / 4);
+  const isVisible =
+    itemRect.top >= listRect.top + buffer && itemRect.bottom <= listRect.bottom - buffer;
+  if (isVisible) return;
+
+  const target =
+    activeItem.offsetTop - Math.max((listHeight - activeItem.offsetHeight) / 2, 0);
+  list.scrollTop = clamp(target, 0, Math.max(list.scrollHeight - listHeight, 0));
+}
+
+function getOutlineProgress(
+  view: ReturnType<typeof createTocRailView>,
+  items: readonly TocRailItem[],
+  headings: readonly InternalTocRailHeading[],
+  activeIndex: number,
+  metrics: ReturnType<typeof measureRailMetrics>,
+  win: Window,
+  options: TocRailOptions,
+  fallbackProgress: number
+): number {
+  if (activeIndex < 0) return 0;
+
+  const track = view.progressFill.parentElement;
+  const trackRect = track?.getBoundingClientRect();
+  const trackHeight = trackRect?.height ?? 0;
+  if (!trackRect || trackHeight <= 0) return fallbackProgress;
+
+  const currentCenter = getLinkCenter(items[activeIndex]!.link);
+  let targetCenter = currentCenter;
+  const activePoint =
+    win.scrollY +
+    (options.topOffset ?? DEFAULT_TOP_OFFSET) +
+    (options.activeOffset ?? DEFAULT_ACTIVE_OFFSET);
+
+  const nextHeading = headings[activeIndex + 1];
+  const nextItem = items[activeIndex + 1];
+  if (nextHeading && nextItem) {
+    const sectionSpan = Math.max(nextHeading.top - headings[activeIndex]!.top, 1);
+    const t = clamp((activePoint - headings[activeIndex]!.top) / sectionSpan, 0, 1);
+    targetCenter = mix(currentCenter, getLinkCenter(nextItem.link), t);
+  } else {
+    const contentTop = metrics.contentRect.top + metrics.scrollY;
+    const contentEnd = contentTop + Math.max(metrics.scrollHeight || metrics.contentRect.height, 1);
+    // Let the final item feel anchored before the line finishes toward the track end.
+    const finalStart = headings[activeIndex]!.top + (options.topOffset ?? DEFAULT_TOP_OFFSET);
+    const finalSpan = Math.max(contentEnd - finalStart, 1);
+    const t = clamp((activePoint - finalStart) / finalSpan, 0, 1);
+    targetCenter = mix(currentCenter, trackRect.bottom, t);
+  }
+
+  return clamp((targetCenter - trackRect.top) / trackHeight, 0, 1);
+}
+
+function getLinkCenter(link: HTMLAnchorElement): number {
+  const rect = link.getBoundingClientRect();
+  return rect.top + rect.height / 2;
+}
+
+function mix(start: number, end: number, t: number): number {
+  return start + (end - start) * t;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, Number(value.toFixed(4))));
 }

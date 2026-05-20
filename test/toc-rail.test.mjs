@@ -227,7 +227,7 @@ test("mountTocRail mounts an accessible text outline with progress", () => {
   assert.equal(list.children[0].children[0].dataset.tocRailLink, "true");
 
   const fill = findByClass(rail, "toc-rail__progress-fill");
-  assert.equal(fill.style["--toc-rail-progress"], "0.4657");
+  assert.equal(fill.style["--toc-rail-progress"], "0");
 
   handle.unmount();
   assert.equal(body.children.length, 0);
@@ -301,7 +301,7 @@ test("mountTocRail clears pending frames, timers, and window listeners on unmoun
 
   handle.unmount();
 
-  assert.deepEqual(clearedTimers, [77]);
+  assert.deepEqual(clearedTimers, [77, 77]);
   assert.deepEqual(cancelledFrames, [3, 2]);
   assert.equal(listeners.has("scroll"), false);
   assert.equal(listeners.has("resize"), false);
@@ -332,7 +332,7 @@ test("mountTocRail supports progress-only mode without headings", () => {
   assert.equal(handle.headings.length, 0);
   assert.equal(handle.activeId, null);
   assert.equal(list, null);
-  assert.equal(fill.style["--toc-rail-progress"], "0.4657");
+  assert.equal(fill.style["--toc-rail-progress"], "0.2514");
 
   handle.unmount();
 });
@@ -381,7 +381,7 @@ test("mountTocRail applies consistent before-content and after-content visibilit
   let list = findByClass(rail, "toc-rail__list");
   assert.equal(list.children[0].children[0].getAttribute("tabindex"), "-1");
 
-  article._rect = { top: -6200, height: 6600, bottom: 400 };
+  article._rect = { top: -6720, height: 6600, bottom: -120 };
   handle.update();
 
   assert.equal(rail.classList.contains("is-after-content"), true);
@@ -391,7 +391,7 @@ test("mountTocRail applies consistent before-content and after-content visibilit
   assert.equal(rail.inert, true);
   assert.equal(list.children[0].children[0].getAttribute("tabindex"), "-1");
 
-  article._rect = { top: -6000, height: 6600, bottom: 600 };
+  article._rect = { top: -6600, height: 6600, bottom: 0 };
   handle.update();
   assert.equal(rail.classList.contains("is-after-content"), false);
   assert.equal(rail.dataset.tocRailState, "fading-after");
@@ -401,7 +401,7 @@ test("mountTocRail applies consistent before-content and after-content visibilit
   assert.equal(rail.inert, false);
   assert.equal(list.children[0].children[0].getAttribute("tabindex"), undefined);
 
-  article._rect = { top: -5800, height: 6600, bottom: 800 };
+  article._rect = { top: -6540, height: 6600, bottom: 60 };
   handle.update();
   assert.equal(rail.classList.contains("is-before-content"), false);
   assert.equal(rail.classList.contains("is-after-content"), false);

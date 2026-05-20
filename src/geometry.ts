@@ -52,7 +52,7 @@ export function computeVisualState(
     };
   }
 
-  const afterFade = calculateAfterFade(metrics, options);
+  const afterFade = calculateAfterFade(metrics, options, topOffset);
   if (afterFade.opacity <= 0) {
     return {
       visibility: "hidden-after",
@@ -99,17 +99,16 @@ function shouldHideBefore(
 
 function calculateAfterFade(
   metrics: TocRailMetrics,
-  options: TocRailOptions
+  options: TocRailOptions,
+  topOffset: number
 ): { opacity: number; offset: number } {
   if (options.edge?.hideAfter === false) {
     return { opacity: 1, offset: 0 };
   }
 
-  // Fade by the rail's real bottom edge, not the viewport, so short rails do not linger past content.
-  const railBottom = getRectBottom(metrics.railRect);
-  const distance = getRectBottom(metrics.contentRect) - railBottom;
   const fadeDistance = Math.max(options.edge?.afterFadeDistance ?? DEFAULT_AFTER_FADE_DISTANCE, 1);
-  const opacity = clamp(distance / fadeDistance, 0, 1);
+  const afterDistance = topOffset - getRectBottom(metrics.contentRect);
+  const opacity = 1 - clamp(afterDistance / fadeDistance, 0, 1);
   return {
     opacity,
     offset: Number(((1 - opacity) * DEFAULT_EDGE_TRANSLATE).toFixed(3))
@@ -117,11 +116,10 @@ function calculateAfterFade(
 }
 
 function calculateProgress(metrics: TocRailMetrics, topOffset: number): number {
-  const contentTop = metrics.contentRect.top + metrics.scrollY - topOffset;
-  const contentEnd = contentTop + Math.max(metrics.scrollHeight || metrics.contentRect.height, 1);
-  // The midpoint feels closer to reading progress than the very top of the viewport.
-  const midpoint = metrics.scrollY + metrics.innerHeight / 2;
-  return clamp((midpoint - contentTop) / Math.max(contentEnd - contentTop, 1), 0, 1);
+  const contentTop = metrics.contentRect.top + metrics.scrollY;
+  const contentHeight = Math.max(metrics.scrollHeight || metrics.contentRect.height, 1);
+  const progressPoint = metrics.scrollY + topOffset;
+  return clamp((progressPoint - contentTop) / contentHeight, 0, 1);
 }
 
 function getRectBottom(rect: { bottom: number; height: number; top: number }): number {

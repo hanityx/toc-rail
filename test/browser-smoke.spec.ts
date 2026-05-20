@@ -48,13 +48,13 @@ test("demo mounts, scrolls, navigates, and hides on narrow viewports", async ({ 
   const rail = page.locator("[data-toc-rail='true']");
   await expect(rail).toBeVisible();
   await expect(rail).toHaveAttribute("data-toc-rail-state", /visible|fading-after/);
-  await expect(page.locator(".toc-rail__link")).toHaveCount(17);
+  await expect(page.locator(".toc-rail__link")).toHaveCount(15);
 
-  await page.locator(".toc-rail__link[href='#visual-states']").click();
-  await expect(page).toHaveURL(/#visual-states$/);
+  await page.locator(".toc-rail__link[href='#style']").click();
+  await expect(page).toHaveURL(/#style$/);
   await expect(page.locator("[data-toc-rail-active='true'] a")).toHaveAttribute(
     "href",
-    "#visual-states"
+    "#style"
   );
 
   const progress = await page
@@ -63,6 +63,138 @@ test("demo mounts, scrolls, navigates, and hides on narrow viewports", async ({ 
       Number(getComputedStyle(element).getPropertyValue("--toc-rail-progress"))
     );
   expect(progress).toBeGreaterThan(0);
+
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
+    document.body.style.setProperty("scroll-behavior", "auto", "important");
+  });
+  for (const id of [
+    "install",
+    "install-css",
+    "mount",
+    "mount-headings",
+    "reader-progress",
+    "style",
+    "style-color",
+    "dynamic-pages",
+    "final-check"
+  ]) {
+    const sync = await page.evaluate((sectionId) => {
+      const heading = document.getElementById(sectionId);
+      if (!heading) throw new Error(`Missing heading ${sectionId}`);
+      window.scrollTo(0, Math.max(0, heading.getBoundingClientRect().top + window.scrollY - 68));
+
+      return new Promise<{
+        activeHref: string | null;
+        delta: number;
+        progress: number;
+        state: string | null;
+        activeBottomGap: number | null;
+      }>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const active = document.querySelector<HTMLAnchorElement>(
+              "[data-toc-rail-active='true'] a"
+            );
+            const list = document.querySelector<HTMLElement>(".toc-rail__list");
+            const fill = document.querySelector<HTMLElement>(".toc-rail__progress-fill");
+            const track = document.querySelector<HTMLElement>(".toc-rail__progress");
+            const rail = document.querySelector<HTMLElement>("[data-toc-rail='true']");
+            if (!active || !list || !fill || !track) {
+              throw new Error("Rail sync elements are missing.");
+            }
+
+            const activeRect = active.getBoundingClientRect();
+            const listRect = list.getBoundingClientRect();
+            const trackRect = track.getBoundingClientRect();
+            const progress = Number(
+              getComputedStyle(fill).getPropertyValue("--toc-rail-progress")
+            );
+            const fillEnd = trackRect.top + trackRect.height * progress;
+            const activeCenter = activeRect.top + activeRect.height / 2;
+            resolve({
+              activeHref: active.getAttribute("href"),
+              delta: fillEnd - activeCenter,
+              progress,
+              state: rail?.getAttribute("data-toc-rail-state") ?? null,
+              activeBottomGap: listRect.bottom - activeRect.bottom
+            });
+          });
+        });
+      });
+    }, id);
+
+    expect(sync.activeHref).toBe(`#${id}`);
+    expect(Math.abs(sync.delta)).toBeLessThanOrEqual(8);
+    expect(sync.progress).toBeGreaterThan(0);
+    if (id === "final-check") {
+      expect(sync.state).toBe("visible");
+      expect(sync.activeBottomGap).toBeGreaterThan(24);
+    }
+  }
+
+  await page.mouse.wheel(0, 240);
+  await expect(rail).toHaveClass(/is-scrolling/);
+  await expect(page.locator(".toc-rail__progress-fill")).toHaveCSS(
+    "transition-duration",
+    "0s"
+  );
+  await page.waitForTimeout(100);
+
+  const edgeStates = await page.evaluate(async () => {
+    const article = document.querySelector("article");
+    if (!article) throw new Error("Missing article.");
+    const contentBottom = article.getBoundingClientRect().bottom + window.scrollY;
+    const states: Array<{
+      bottom: number;
+      opacity: number;
+      state: string | null;
+    }> = [];
+
+    for (const bottom of [60, 0, -120]) {
+      window.scrollTo(0, contentBottom - bottom);
+      window.dispatchEvent(new Event("scroll"));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const rail = document.querySelector<HTMLElement>("[data-toc-rail='true']");
+      states.push({
+        bottom,
+        opacity: Number(rail?.style.getPropertyValue("--toc-rail-edge-opacity")),
+        state: rail?.getAttribute("data-toc-rail-state") ?? null
+      });
+    }
+
+    return states;
+  });
+
+  expect(edgeStates[0]).toEqual({ bottom: 60, opacity: 1, state: "visible" });
+  expect(edgeStates[1]?.bottom).toBe(0);
+  expect(edgeStates[1]?.state).toBe("fading-after");
+  expect(edgeStates[1]?.opacity).toBeGreaterThan(0.64);
+  expect(edgeStates[1]?.opacity).toBeLessThan(0.66);
+  expect(edgeStates[2]).toEqual({ bottom: -120, opacity: 0, state: "hidden-after" });
+
+  const afterContent = await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+
+    return new Promise<{ progress: number; state: string | null; ariaHidden: string | null }>(
+      (resolve) => {
+        setTimeout(() => {
+          const rail = document.querySelector<HTMLElement>("[data-toc-rail='true']");
+          const fill = document.querySelector<HTMLElement>(".toc-rail__progress-fill");
+          resolve({
+            progress: Number(getComputedStyle(fill!).getPropertyValue("--toc-rail-progress")),
+            state: rail?.getAttribute("data-toc-rail-state") ?? null,
+            ariaHidden: rail?.getAttribute("aria-hidden") ?? null
+          });
+        }, 550);
+      }
+    );
+  });
+
+  expect(afterContent.progress).toBe(1);
+  expect(afterContent.state).toBe("hidden-after");
+  expect(afterContent.ariaHidden).toBe("true");
 
   await page.setViewportSize({ width: 900, height: 780 });
   await expect(rail).toBeHidden();
@@ -75,7 +207,7 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
   await page.goto(`${baseUrl}/demo/index.html`);
 
   await page.evaluate(async () => {
-    const { mountTocRail } = await import("/dist/index.js");
+    const { mountTocRail } = (await window.eval('import("/dist/index.js")')) as typeof import("../dist/index.js");
 
     const progressArticle = document.createElement("article");
     progressArticle.id = "progress-fixture";
@@ -132,6 +264,90 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
   await expect(hiddenRail).toHaveAttribute("data-toc-rail-state", "hidden-before");
   await expect(hiddenRail).toHaveAttribute("aria-hidden", "true");
   await expect(hiddenRail.locator(".toc-rail__link")).toHaveAttribute("tabindex", "-1");
+});
+
+test("long outlines keep the active item visible and synced", async ({ page }) => {
+  await page.goto(`${baseUrl}/demo/index.html`);
+
+  await page.evaluate(async () => {
+    document.body.innerHTML =
+      '<main style="width:min(100%,1120px);margin:0 auto;padding:64px 24px 120vh"><article id="stress" style="width:min(100%,680px)"><h1>Stress article</h1></article></main>';
+    const article = document.querySelector("#stress");
+    if (!article) throw new Error("Missing stress article.");
+
+    for (let index = 1; index <= 42; index += 1) {
+      const heading = document.createElement(index % 3 === 0 ? "h3" : "h2");
+      heading.id = `section-${index}`;
+      heading.textContent = `Section ${index}`;
+      heading.style.marginTop = index === 1 ? "80px" : "180px";
+      heading.style.scrollMarginTop = "84px";
+
+      const paragraph = document.createElement("p");
+      paragraph.textContent = "Body ".repeat(80);
+      article.append(heading, paragraph);
+    }
+
+    const { mountReadingRail } = (await window.eval('import("/dist/index.js")')) as typeof import("../dist/index.js");
+    mountReadingRail({
+      content: "#stress",
+      headings: "#stress h2[id], #stress h3[id]",
+      title: "Contents",
+      minWidth: 1140,
+      topOffset: 56,
+      activeOffset: 40,
+      edge: { hideBefore: false }
+    });
+
+    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
+    document.body.style.setProperty("scroll-behavior", "auto", "important");
+  });
+
+  for (const index of [1, 10, 20, 30, 40, 42]) {
+    const sync = await page.evaluate((sectionIndex) => {
+      const heading = document.getElementById(`section-${sectionIndex}`);
+      if (!heading) throw new Error(`Missing section ${sectionIndex}`);
+      window.scrollTo(0, heading.getBoundingClientRect().top + window.scrollY - 68);
+
+      return new Promise<{
+        activeHref: string | null;
+        activeVisible: boolean;
+        delta: number;
+      }>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const active = document.querySelector<HTMLAnchorElement>(
+              "[data-toc-rail-active='true'] a"
+            );
+            const list = document.querySelector<HTMLElement>(".toc-rail__list");
+            const fill = document.querySelector<HTMLElement>(".toc-rail__progress-fill");
+            const track = document.querySelector<HTMLElement>(".toc-rail__progress");
+            if (!active || !list || !fill || !track) {
+              throw new Error("Rail sync elements are missing.");
+            }
+
+            const activeRect = active.getBoundingClientRect();
+            const listRect = list.getBoundingClientRect();
+            const trackRect = track.getBoundingClientRect();
+            const progress = Number(
+              getComputedStyle(fill).getPropertyValue("--toc-rail-progress")
+            );
+            const fillEnd = trackRect.top + trackRect.height * progress;
+            const activeCenter = activeRect.top + activeRect.height / 2;
+            resolve({
+              activeHref: active.getAttribute("href"),
+              activeVisible:
+                activeRect.top >= listRect.top && activeRect.bottom <= listRect.bottom,
+              delta: fillEnd - activeCenter
+            });
+          });
+        });
+      });
+    }, index);
+
+    expect(sync.activeHref).toBe(`#section-${index}`);
+    expect(sync.activeVisible).toBe(true);
+    expect(Math.abs(sync.delta)).toBeLessThanOrEqual(8);
+  }
 });
 
 function contentType(filePath: string): string {

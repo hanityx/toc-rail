@@ -8,3 +8,6 @@ export const DEFAULT_MIN_WIDTH = 1140;
 export const DEFAULT_SCROLLING_CLASS_DURATION = 1400;
 export const DEFAULT_TOP_OFFSET = 52;
 export const DEFAULT_EDGE_TRANSLATE = 8;
+export const DEFAULT_TITLE = "On this page";
+export const DEFAULT_ARIA_LABEL = "Table of contents";
+export const DEFAULT_TITLE_ID_PREFIX = "toc-rail";

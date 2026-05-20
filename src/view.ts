@@ -1,4 +1,9 @@
-import { DEFAULT_ACTIVE_CLASS } from "./defaults.js";
+import {
+  DEFAULT_ACTIVE_CLASS,
+  DEFAULT_ARIA_LABEL,
+  DEFAULT_TITLE,
+  DEFAULT_TITLE_ID_PREFIX
+} from "./defaults.js";
 import type {
   InternalTocRailHeading,
   TocRailItem,
@@ -142,15 +147,15 @@ export function finishInitialRender(view: TocRailView): void {
 
 function applyNavigationLabel(panel: HTMLElement, doc: Document, options: TocRailOptions): void {
   if (options.title === false) {
-    panel.setAttribute("aria-label", options.ariaLabel ?? "Table of contents");
+    panel.setAttribute("aria-label", options.ariaLabel ?? DEFAULT_ARIA_LABEL);
     return;
   }
 
   const title = doc.createElement("p");
-  const titleId = createUniqueTitleId(doc, options.idPrefix ?? "toc-rail");
+  const titleId = createUniqueTitleId(doc, options.idPrefix ?? DEFAULT_TITLE_ID_PREFIX);
   title.className = "toc-rail__title";
   title.id = titleId;
-  title.textContent = options.title ?? "On this page";
+  title.textContent = options.title ?? DEFAULT_TITLE;
   panel.append(title);
 
   if (options.ariaLabel) {
@@ -166,7 +171,7 @@ function setRailInteractive(
   isInteractive: boolean
 ): void {
   // Hidden rails stay out of keyboard order, even while CSS is fading them.
-  (root as HTMLElement & { inert?: boolean }).inert = !isInteractive;
+  root.inert = !isInteractive;
   items.forEach(({ link }) => {
     if (isInteractive) {
       link.removeAttribute("tabindex");
