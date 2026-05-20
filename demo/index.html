@@ -341,7 +341,10 @@ rail.unmount(); // route is leaving</code></pre>
       </article>
     </main>
     <script type="module">
-      import { mountTocRail } from "../dist/index.js?v=demo-0.1.1";
+      const moduleUrl = location.hostname.endsWith("github.io")
+        ? "https://cdn.jsdelivr.net/npm/toc-rail@0.1.0/dist/index.js"
+        : "../dist/index.js?v=demo-0.1.1";
+      const { mountTocRail } = await import(moduleUrl);
 
       mountTocRail({
         content: "#demo-article",

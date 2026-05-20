@@ -208,6 +208,13 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
 
   await page.evaluate(async () => {
     const { mountTocRail } = (await window.eval('import("/dist/index.js")')) as typeof import("../dist/index.js");
+    const fixtureStyles = document.createElement("style");
+    fixtureStyles.textContent = `
+      .progress-fixture-rail { --toc-rail-right: 560px; }
+      .fragment-fixture-rail { --toc-rail-right: 340px; }
+      .hidden-fixture-rail { --toc-rail-right: 120px; }
+    `;
+    document.head.append(fixtureStyles);
 
     const progressArticle = document.createElement("article");
     progressArticle.id = "progress-fixture";
