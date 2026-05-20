@@ -7,6 +7,8 @@ import {
 } from "./defaults.js";
 import type { InternalTocRailHeading, TocRailOptions, TocRailVisibilityState } from "./types.js";
 
+const ACTIVE_POINT_EPSILON = 1;
+
 export interface TocRailMetrics {
   contentRect: DOMRect | { bottom: number; height: number; top: number };
   railRect: DOMRect | { bottom: number; height: number; top: number };
@@ -80,7 +82,7 @@ export function findActiveHeadingIndex(
   let activeIndex = -1;
 
   for (let index = 0; index < headings.length; index += 1) {
-    if (headings[index]!.top <= activePoint) activeIndex = index;
+    if (headings[index]!.top <= activePoint + ACTIVE_POINT_EPSILON) activeIndex = index;
     else break;
   }
 

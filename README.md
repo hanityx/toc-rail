@@ -57,7 +57,7 @@ Override CSS tokens:
 
 ```css
 .toc-rail {
-  --toc-rail-accent: #0066cc;
+  --toc-rail-accent: #197ca8;
   --toc-rail-width: 184px;
   --toc-rail-right: 2rem;
   --toc-rail-top: max(96px, 18vh);

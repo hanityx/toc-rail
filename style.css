@@ -1,5 +1,5 @@
 .toc-rail {
-  --toc-rail-accent: #0066cc;
+  --toc-rail-accent: #197ca8;
   --toc-rail-line: rgba(24, 31, 36, 0.14);
   --toc-rail-muted: rgba(24, 31, 36, 0.62);
   --toc-rail-faint: rgba(24, 31, 36, 0.34);
@@ -18,10 +18,9 @@
   --toc-rail-link-line-height: 1.3;
   --toc-rail-link-indent: 0.75rem;
   --toc-rail-link-nested-indent: 1.25rem;
-  --toc-rail-nav-height: 52px;
-  --toc-rail-panel-bottom-gap: 5rem;
-  --toc-rail-list-bottom-gap: 180px;
-  --toc-rail-list-end-space: 3.5rem;
+  --toc-rail-panel-bottom-gap: clamp(1.5rem, 5vh, 5rem);
+  --toc-rail-list-bottom-gap: clamp(1.5rem, 5vh, 180px);
+  --toc-rail-list-end-space: clamp(1rem, 4vh, 3.5rem);
   --toc-rail-duration-fast: 150ms;
   --toc-rail-duration-normal: 250ms;
   --toc-rail-fade-duration: 500ms;
@@ -32,6 +31,26 @@
   --toc-rail-edge-offset: 0px;
   --toc-rail-edge-translate: 8px;
   --toc-rail-visibility-delay: 0s;
+  --_toc-rail-progress-floor: 0.012;
+  --_toc-rail-viewport-height: 100vh;
+  --_toc-rail-viewport-height: 100dvh;
+  --_toc-rail-panel-height: max(
+    0px,
+    calc(
+      var(--_toc-rail-viewport-height) - var(--toc-rail-top) -
+        var(--toc-rail-panel-bottom-gap)
+    )
+  );
+  --_toc-rail-list-height: max(
+    0px,
+    min(
+      var(--_toc-rail-panel-height),
+      calc(
+        var(--_toc-rail-viewport-height) - var(--toc-rail-top) -
+          var(--toc-rail-list-bottom-gap)
+      )
+    )
+  );
 
   position: fixed;
   top: var(--toc-rail-top);
@@ -86,7 +105,7 @@
 
 .toc-rail__panel {
   display: flex;
-  max-height: calc(100vh - var(--toc-rail-nav-height) - var(--toc-rail-panel-bottom-gap));
+  max-height: var(--_toc-rail-panel-height);
   flex-direction: column;
   gap: 0.75rem;
   overflow: hidden;
@@ -105,12 +124,15 @@
 
 .toc-rail__wrap {
   position: relative;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
+  max-height: var(--_toc-rail-list-height);
   overflow: hidden;
 }
 
 .toc-rail[data-toc-rail-mode="progress"] .toc-rail__wrap {
-  height: max(160px, calc(100vh - var(--toc-rail-nav-height) - var(--toc-rail-list-bottom-gap)));
+  height: var(--_toc-rail-list-height);
 }
 
 .toc-rail__progress {
@@ -129,7 +151,7 @@
   width: 100%;
   background: var(--toc-rail-accent);
   opacity: 0.9;
-  transform: scaleY(var(--toc-rail-progress, 0));
+  transform: scaleY(max(var(--toc-rail-progress, 0), var(--_toc-rail-progress-floor)));
   transform-origin: top;
   transition: transform var(--toc-rail-duration-fast) linear;
 }
@@ -140,7 +162,8 @@
 
 .toc-rail__list {
   display: flex;
-  max-height: calc(100vh - var(--toc-rail-nav-height) - var(--toc-rail-list-bottom-gap));
+  flex: 1 1 auto;
+  max-height: var(--_toc-rail-list-height);
   min-height: 0;
   flex-direction: column;
   gap: 2px;
@@ -148,8 +171,12 @@
   padding: 0 0 var(--toc-rail-list-end-space);
   overflow: auto;
   list-style: none;
-  scrollbar-color: var(--toc-rail-faint) transparent;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.toc-rail__list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .toc-rail__item {

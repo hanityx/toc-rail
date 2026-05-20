@@ -202,14 +202,21 @@ function syncActiveItemVisibility(
   if (!activeItem || listHeight <= 0 || list.scrollHeight <= listHeight) return;
 
   const listRect = list.getBoundingClientRect();
+  const trackRect = view.progressFill.parentElement?.getBoundingClientRect();
   const itemRect = activeItem.getBoundingClientRect();
-  const buffer = Math.min(40, listHeight / 4);
-  const isVisible =
-    itemRect.top >= listRect.top + buffer && itemRect.bottom <= listRect.bottom - buffer;
-  if (isVisible) return;
+  const upperEdge = Math.max(listRect.top, trackRect?.top ?? listRect.top);
+  const lowerEdge = Math.min(listRect.bottom, trackRect?.bottom ?? listRect.bottom);
+  if (lowerEdge <= upperEdge) return;
+  let target = list.scrollTop;
 
-  const target =
-    activeItem.offsetTop - Math.max((listHeight - activeItem.offsetHeight) / 2, 0);
+  if (itemRect.top < upperEdge) {
+    target -= upperEdge - itemRect.top;
+  } else if (itemRect.bottom > lowerEdge) {
+    target += itemRect.bottom - lowerEdge;
+  } else {
+    return;
+  }
+
   list.scrollTop = clamp(target, 0, Math.max(list.scrollHeight - listHeight, 0));
 }
 

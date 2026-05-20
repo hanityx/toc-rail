@@ -450,3 +450,19 @@ test("mountTocRail uses cached heading positions until refresh", () => {
   handle.unmount();
   assert.equal(body.children.length, 0);
 });
+
+test("mountTocRail treats sub-pixel hash landing as active", () => {
+  const { window } = createDom();
+  const handle = mountTocRail({
+    content: "article",
+    topOffset: 52,
+    activeOffset: 32,
+    environment: { window }
+  });
+
+  window.scrollY = 435.5;
+  handle.update();
+  assert.equal(handle.activeId, "intro section");
+
+  handle.unmount();
+});

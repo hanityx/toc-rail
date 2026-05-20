@@ -79,10 +79,13 @@ test("demo mounts, scrolls, navigates, and hides on narrow viewports", async ({ 
     "install-css",
     "mount",
     "mount-headings",
+    "reader-state",
     "reader-progress",
     "style",
     "style-color",
     "dynamic-pages",
+    "dynamic-unmount",
+    "progress-only",
     "final-check"
   ]) {
     const sync = await page.evaluate((sectionId) => {
@@ -147,6 +150,64 @@ test("demo mounts, scrolls, navigates, and hides on narrow viewports", async ({ 
   );
   await page.waitForTimeout(100);
 
+  await page.setViewportSize({ width: 1280, height: 680 });
+  const constrainedRailScroll = await page.evaluate(async () => {
+    const samples: Array<{ id: string; listTop: number }> = [];
+
+    for (const id of ["dynamic-pages", "dynamic-refresh", "dynamic-unmount"]) {
+      const heading = document.getElementById(id);
+      if (!heading) throw new Error(`Missing heading ${id}`);
+      window.scrollTo(0, Math.max(0, heading.getBoundingClientRect().top + window.scrollY - 68));
+      window.dispatchEvent(new Event("scroll"));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const list = document.querySelector<HTMLElement>(".toc-rail__list");
+      samples.push({ id, listTop: Math.round(list?.scrollTop ?? 0) });
+    }
+
+    return samples;
+  });
+  expect(
+    Math.max(...constrainedRailScroll.map((sample) => sample.listTop)) -
+      Math.min(...constrainedRailScroll.map((sample) => sample.listTop))
+  ).toBeLessThanOrEqual(64);
+
+  const railFitSamples: Array<{
+    listOverWrap: number;
+    rootBottomGap: number;
+    scrollbarWidth: string;
+  }> = [];
+  for (const height of [600, 560]) {
+    await page.setViewportSize({ width: 1280, height });
+    railFitSamples.push(
+      await page.evaluate(async (sampleHeight) => {
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const rail = document.querySelector<HTMLElement>("[data-toc-rail='true']");
+        const wrap = document.querySelector<HTMLElement>(".toc-rail__wrap");
+        const list = document.querySelector<HTMLElement>(".toc-rail__list");
+        if (!rail || !wrap || !list) {
+          throw new Error("Rail fit elements are missing.");
+        }
+
+        const railRect = rail.getBoundingClientRect();
+        const wrapRect = wrap.getBoundingClientRect();
+        const listRect = list.getBoundingClientRect();
+        return {
+          listOverWrap: Math.round(listRect.bottom - wrapRect.bottom),
+          rootBottomGap: Math.round(window.innerHeight - railRect.bottom),
+          scrollbarWidth: getComputedStyle(list).scrollbarWidth
+        };
+      }, height)
+    );
+  }
+  for (const sample of railFitSamples) {
+    expect(sample.rootBottomGap).toBeGreaterThanOrEqual(0);
+    expect(sample.listOverWrap).toBeLessThanOrEqual(0);
+    expect(sample.scrollbarWidth).toBe("none");
+  }
+
+  await page.setViewportSize({ width: 1280, height: 780 });
+
   const edgeStates = await page.evaluate(async () => {
     const article = document.querySelector("article");
     if (!article) throw new Error("Missing article.");
@@ -202,7 +263,13 @@ test("demo mounts, scrolls, navigates, and hides on narrow viewports", async ({ 
   expect(afterContent.state).toBe("hidden-after");
   expect(afterContent.ariaHidden).toBe("true");
 
+  await page.setViewportSize({ width: 1024, height: 780 });
+  await expect(rail).toBeVisible();
+
   await page.setViewportSize({ width: 900, height: 780 });
+  await expect(rail).toBeVisible();
+
+  await page.setViewportSize({ width: 760, height: 780 });
   await expect(rail).toBeHidden();
   await expect(rail).toHaveAttribute("hidden", "");
 });
@@ -299,6 +366,13 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
   const fragmentRail = page.locator(".fragment-fixture-rail");
   await fragmentRail.locator(".toc-rail__link").click();
   await expect(page).toHaveURL(/#encoded%20section$/);
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        window.dispatchEvent(new Event("scroll"));
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      })
+  );
   await expect(fragmentRail.locator("[data-toc-rail-active='true'] a")).toHaveAttribute(
     "href",
     "#encoded%20section"

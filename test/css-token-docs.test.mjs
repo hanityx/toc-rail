@@ -63,7 +63,6 @@ test("demo documents CSS customization tokens separately from runtime tokens", a
     "--toc-rail-list-bottom-gap",
     "--toc-rail-list-end-space",
     "--toc-rail-muted",
-    "--toc-rail-nav-height",
     "--toc-rail-panel-bottom-gap",
     "--toc-rail-right",
     "--toc-rail-text",

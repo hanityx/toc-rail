@@ -82,7 +82,7 @@
       }
 
       h3 {
-        margin: 2.3rem 0 0.55rem;
+        margin: 3rem 0 0.65rem;
         font-size: 1rem;
         font-weight: 720;
       }
@@ -221,10 +221,10 @@
       }
 
       .toc-rail {
-        /* Layout only. The rail color stays on the package default tokens. */
+        /* Keep the demo rail visible on ordinary desktop browser widths. */
+        --toc-rail-width: clamp(156px, 17vw, 184px);
         --toc-rail-right: max(1.5rem, calc((100vw - 1120px) / 2));
         --toc-rail-top: max(92px, 17vh);
-        --toc-rail-list-bottom-gap: 132px;
       }
 
       @media (max-width: 1139px) {
@@ -232,8 +232,23 @@
           padding-top: 3rem;
         }
 
+        article {
+          width: min(100%, 640px);
+        }
+
         .steps {
           grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 900px) {
+        article {
+          width: min(100%, 560px);
+        }
+
+        .toc-rail {
+          --toc-rail-right: 1rem;
+          --toc-rail-link-size: 0.625rem;
         }
       }
     </style>
@@ -289,7 +304,7 @@ import "toc-rail/style.css";
 const rail = mountTocRail({
   content: "article",
   headings: "article h2[id], article h3[id]",
-  minWidth: 1140,
+  minWidth: 800,
   topOffset: 56
 });</code></pre>
 
@@ -306,6 +321,10 @@ const rail = mountTocRail({
           While the page scrolls, toc-rail measures the article and writes active
           state to the matching rail item.
         </p>
+        <p>
+          The rail does not read layout on every paint. It caches heading
+          positions and only updates the visible state during scroll frames.
+        </p>
 
         <h3 id="reader-active">Active section</h3>
         <p>
@@ -313,11 +332,23 @@ const rail = mountTocRail({
           <code>data-toc-rail-active="true"</code>, and
           <code>aria-current="location"</code>.
         </p>
+        <p>
+          Use that state for a quiet current-section treatment, not for a second
+          navigation system.
+        </p>
+        <p>
+          For dense outlines, keep enough body copy between headings so the
+          active state has room to settle while someone scrolls.
+        </p>
 
         <h3 id="reader-progress">Progress line</h3>
         <p>
           The vertical line fills as the reader moves through the content. It is
           CSS-driven, so you can restyle it without touching JavaScript.
+        </p>
+        <p>
+          The progress value is exposed on the rail root for debugging and on
+          the fill element for the default CSS transform.
         </p>
 
         <h2 id="style">Style</h2>
@@ -352,7 +383,6 @@ const rail = mountTocRail({
             <li><code>--toc-rail-link-line-height</code></li>
             <li><code>--toc-rail-link-indent</code></li>
             <li><code>--toc-rail-link-nested-indent</code></li>
-            <li><code>--toc-rail-nav-height</code></li>
             <li><code>--toc-rail-panel-bottom-gap</code></li>
             <li><code>--toc-rail-list-bottom-gap</code></li>
             <li><code>--toc-rail-list-end-space</code></li>
@@ -371,11 +401,23 @@ const rail = mountTocRail({
           Move the rail with <code>--toc-rail-left</code>,
           <code>--toc-rail-right</code>, and <code>--toc-rail-top</code>.
         </p>
+        <p>
+          Keep enough space between the article and the rail so the outline
+          stays readable at narrower desktop widths.
+        </p>
+        <p>
+          The demo uses only CSS variables for placement, matching the way a
+          blog or documentation layout would tune the package.
+        </p>
 
         <h3 id="style-color">Color</h3>
         <p>
           Use <code>--toc-rail-accent</code> only when the site needs a different
           brand color. No runtime theme object is required.
+        </p>
+        <p>
+          The default accent follows the package baseline. Override one CSS
+          variable when a site needs its own brand color.
         </p>
 
         <h2 id="dynamic-pages">Dynamic pages</h2>
@@ -392,11 +434,23 @@ rail.unmount(); // route is leaving</code></pre>
           Call <code>refresh()</code> after images, embeds, or generated headings
           change the article height.
         </p>
+        <p>
+          The rail also listens for resizes and late-loading fonts, but explicit
+          refreshes are useful after client-rendered markdown changes.
+        </p>
+        <p>
+          If your CMS swaps the article without a full page load, refresh after
+          the new headings are in the DOM.
+        </p>
 
         <h3 id="dynamic-unmount">Unmount on route changes</h3>
         <p>
           <code>unmount()</code> removes the DOM node, listeners, timers, animation
           frames, observers, and image load hooks.
+        </p>
+        <p>
+          That makes route cleanup predictable in Astro islands, React effects,
+          Vue mounts, and other client-side page transitions.
         </p>
 
         <h2 id="progress-only">Progress only</h2>
@@ -427,8 +481,9 @@ rail.unmount(); // route is leaving</code></pre>
       mountTocRail({
         content: "#demo-article",
         headings: "#demo-article h2[id], #demo-article h3[id]",
-        title: "Contents",
-        minWidth: 1140,
+        title: false,
+        ariaLabel: "Article sections",
+        minWidth: 800,
         topOffset: 56,
         activeOffset: 40,
         edge: {
