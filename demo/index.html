@@ -177,12 +177,54 @@
         font-size: 0.86rem;
       }
 
+      .token-reference {
+        margin-top: 1rem;
+        color: #555;
+        font-size: 0.9rem;
+      }
+
+      .token-reference summary {
+        cursor: pointer;
+        color: #222;
+        font-weight: 650;
+      }
+
+      .token-reference__label {
+        margin: 0.85rem 0 0.4rem;
+        color: #777;
+        font-size: 0.78rem;
+        font-weight: 650;
+        text-transform: uppercase;
+      }
+
+      .token-reference ul {
+        columns: 3 12rem;
+        column-gap: 1.5rem;
+        margin-top: 0;
+        padding-left: 1rem;
+      }
+
+      .token-reference li {
+        break-inside: avoid;
+        margin-bottom: 0.4rem;
+      }
+
+      .token-reference code {
+        font-size: 0.78rem;
+        white-space: nowrap;
+      }
+
+      @media (max-width: 720px) {
+        .token-reference ul {
+          columns: 1;
+        }
+      }
+
       .toc-rail {
         /* Layout only. The rail color stays on the package default tokens. */
         --toc-rail-right: max(1.5rem, calc((100vw - 1120px) / 2));
         --toc-rail-top: max(92px, 17vh);
         --toc-rail-list-bottom-gap: 132px;
-        --toc-rail-base-opacity: 1;
       }
 
       @media (max-width: 1139px) {
@@ -288,6 +330,41 @@ const rail = mountTocRail({
   --toc-rail-right: 2rem;
   --toc-rail-top: max(96px, 18vh);
 }</code></pre>
+        <details class="token-reference">
+          <summary>CSS token reference</summary>
+          <p class="token-reference__label">Customization</p>
+          <ul data-token-reference="customization">
+            <li><code>--toc-rail-accent</code></li>
+            <li><code>--toc-rail-line</code></li>
+            <li><code>--toc-rail-muted</code></li>
+            <li><code>--toc-rail-faint</code></li>
+            <li><code>--toc-rail-text</code></li>
+            <li><code>--toc-rail-title</code></li>
+            <li><code>--toc-rail-width</code></li>
+            <li><code>--toc-rail-top</code></li>
+            <li><code>--toc-rail-right</code></li>
+            <li><code>--toc-rail-left</code></li>
+            <li><code>--toc-rail-z-index</code></li>
+            <li><code>--toc-rail-font-family</code></li>
+            <li><code>--toc-rail-title-size</code></li>
+            <li><code>--toc-rail-link-size</code></li>
+            <li><code>--toc-rail-link-weight</code></li>
+            <li><code>--toc-rail-link-line-height</code></li>
+            <li><code>--toc-rail-link-indent</code></li>
+            <li><code>--toc-rail-link-nested-indent</code></li>
+            <li><code>--toc-rail-nav-height</code></li>
+            <li><code>--toc-rail-panel-bottom-gap</code></li>
+            <li><code>--toc-rail-list-bottom-gap</code></li>
+            <li><code>--toc-rail-list-end-space</code></li>
+          </ul>
+          <p class="token-reference__label">Runtime / read-only</p>
+          <ul data-token-reference="runtime">
+            <li><code>--toc-rail-edge-opacity</code></li>
+            <li><code>--toc-rail-edge-offset</code></li>
+            <li><code>--toc-rail-visibility-delay</code></li>
+            <li><code>--toc-rail-progress</code></li>
+          </ul>
+        </details>
 
         <h3 id="style-placement">Placement</h3>
         <p>

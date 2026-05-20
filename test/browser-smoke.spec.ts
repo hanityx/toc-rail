@@ -212,6 +212,11 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
 }) => {
   await page.goto(`${baseUrl}/demo/index.html`);
 
+  await page.evaluate(() => {
+    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
+    document.body.style.setProperty("scroll-behavior", "auto", "important");
+  });
+
   await page.evaluate(async () => {
     const { mountTocRail } = (await window.eval('import("/dist/index.js")')) as typeof import("../dist/index.js");
     const fixtureStyles = document.createElement("style");
@@ -264,6 +269,32 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
   await expect(progressRail).toHaveAttribute("aria-hidden", "true");
   await expect(progressRail.locator("nav")).toHaveCount(0);
   await expect(progressRail.locator(".toc-rail__link")).toHaveCount(0);
+  const progressOnlyBox = await progressRail.locator(".toc-rail__progress").boundingBox();
+  expect(progressOnlyBox?.height ?? 0).toBeGreaterThan(80);
+
+  const progressOnlyState = await page.evaluate(async () => {
+    const article = document.querySelector<HTMLElement>("#progress-fixture");
+    if (!article) throw new Error("Missing progress fixture.");
+    window.scrollTo(0, article.getBoundingClientRect().top + window.scrollY + 520);
+    window.dispatchEvent(new Event("scroll"));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const rail = document.querySelector<HTMLElement>(".progress-fixture-rail");
+    const fill = rail?.querySelector<HTMLElement>(".toc-rail__progress-fill");
+    const track = rail?.querySelector<HTMLElement>(".toc-rail__progress");
+    if (!rail || !fill || !track) throw new Error("Missing progress-only rail elements.");
+
+    return {
+      data: Number(rail.getAttribute("data-toc-rail-progress")),
+      root: Number(getComputedStyle(rail).getPropertyValue("--toc-rail-progress")),
+      fill: Number(getComputedStyle(fill).getPropertyValue("--toc-rail-progress")),
+      trackHeight: track.getBoundingClientRect().height
+    };
+  });
+  expect(progressOnlyState.trackHeight).toBeGreaterThan(80);
+  expect(progressOnlyState.data).toBeGreaterThan(0);
+  expect(progressOnlyState.root).toBe(progressOnlyState.data);
+  expect(progressOnlyState.fill).toBe(progressOnlyState.data);
 
   const fragmentRail = page.locator(".fragment-fixture-rail");
   await fragmentRail.locator(".toc-rail__link").click();

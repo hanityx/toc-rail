@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Hardened progress-only mode so the visual rail has a stable track height.
+- Added package consumer, TypeScript surface, CSS token, demo version, SSR, and browser layout checks.
+- Added a CI workflow that runs the release check on pushes and pull requests.
+- Clarified SSR/hydration usage, option docs, and runtime/read-only CSS tokens.
+
 ## 0.1.1
 
 - Added the GitHub Pages demo entry and public demo homepage metadata.

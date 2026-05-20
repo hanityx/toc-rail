@@ -341,6 +341,17 @@ test("mountTocRail supports progress-only mode without headings", () => {
   handle.unmount();
 });
 
+test("package import is SSR-safe and mountTocRail fails clearly without a window", async () => {
+  const mod = await import("../dist/index.js");
+
+  assert.equal(typeof mod.mountTocRail, "function");
+  assert.equal(mod.mountReadingRail, mod.mountTocRail);
+  assert.throws(
+    () => mod.mountTocRail({ content: "article" }),
+    /mountTocRail requires a browser window/
+  );
+});
+
 test("mountTocRail creates unique labelled title ids for multiple instances", () => {
   const { body, window } = createDom();
 

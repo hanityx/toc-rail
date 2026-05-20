@@ -50,9 +50,14 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test test/*.test.mjs",
     "test:browser": "playwright test",
-    "check": "npm run build && npm test && npm run test:browser",
+    "test:types": "tsc -p test/tsconfig.json",
+    "test:consumer": "npm run build && npm run test:consumer:packed",
+    "test:consumer:packed": "node test/consumer-smoke.mjs",
+    "check": "npm run build && npm test && npm run test:types && npm run test:consumer:packed && npm run test:browser",
     "prepack": "npm run build && npm test",
-    "pack:dry-run": "npm pack --dry-run"
+    "prepublishOnly": "npm run release:check",
+    "pack:dry-run": "npm pack --dry-run",
+    "release:check": "npm run check && npm run pack:dry-run"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
