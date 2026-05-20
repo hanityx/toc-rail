@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.2
 
 - Hardened progress-only mode so the visual rail has a stable track height.
 - Added package consumer, TypeScript surface, CSS token, demo version, SSR, and browser layout checks.
