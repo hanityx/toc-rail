@@ -109,6 +109,10 @@
   overflow: hidden;
 }
 
+.toc-rail[data-toc-rail-mode="progress"] .toc-rail__wrap {
+  height: max(160px, calc(100vh - var(--toc-rail-nav-height) - var(--toc-rail-list-bottom-gap)));
+}
+
 .toc-rail__progress {
   position: absolute;
   top: 4px;

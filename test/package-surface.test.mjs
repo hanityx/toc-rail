@@ -9,4 +9,7 @@ test("package exports resolve the public JavaScript and CSS surface", async () =
 
   const cssUrl = import.meta.resolve("toc-rail/style.css");
   assert.match(cssUrl, /toc-rail\/style\.css$/);
+  assert.throws(() => import.meta.resolve("toc-rail/dist/index.js"), {
+    code: "ERR_PACKAGE_PATH_NOT_EXPORTED"
+  });
 });
