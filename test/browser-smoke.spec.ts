@@ -57,12 +57,18 @@ test("demo mounts, scrolls, navigates, and hides on narrow viewports", async ({ 
     "#style"
   );
 
-  const progress = await page
-    .locator(".toc-rail__progress-fill")
-    .evaluate((element) =>
-      Number(getComputedStyle(element).getPropertyValue("--toc-rail-progress"))
-    );
-  expect(progress).toBeGreaterThan(0);
+  const progress = await rail.evaluate((element) => ({
+    data: Number(element.getAttribute("data-toc-rail-progress")),
+    root: Number(getComputedStyle(element).getPropertyValue("--toc-rail-progress")),
+    fill: Number(
+      getComputedStyle(element.querySelector(".toc-rail__progress-fill")!).getPropertyValue(
+        "--toc-rail-progress"
+      )
+    )
+  }));
+  expect(progress.data).toBeGreaterThan(0);
+  expect(progress.root).toBe(progress.data);
+  expect(progress.fill).toBe(progress.data);
 
   await page.evaluate(() => {
     document.documentElement.style.setProperty("scroll-behavior", "auto", "important");

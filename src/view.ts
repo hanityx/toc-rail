@@ -114,6 +114,8 @@ export function applyVisualState(
 }
 
 export function applyProgress(view: TocRailView, progress: number): void {
+  view.root.dataset.tocRailProgress = String(progress);
+  view.root.style.setProperty("--toc-rail-progress", String(progress));
   view.progressFill.style.setProperty("--toc-rail-progress", String(progress));
 }
 

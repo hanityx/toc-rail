@@ -227,6 +227,8 @@ test("mountTocRail mounts an accessible text outline with progress", () => {
   assert.equal(list.children[0].children[0].dataset.tocRailLink, "true");
 
   const fill = findByClass(rail, "toc-rail__progress-fill");
+  assert.equal(rail.dataset.tocRailProgress, "0");
+  assert.equal(rail.style["--toc-rail-progress"], "0");
   assert.equal(fill.style["--toc-rail-progress"], "0");
 
   handle.unmount();
@@ -332,6 +334,8 @@ test("mountTocRail supports progress-only mode without headings", () => {
   assert.equal(handle.headings.length, 0);
   assert.equal(handle.activeId, null);
   assert.equal(list, null);
+  assert.equal(rail.dataset.tocRailProgress, "0.2514");
+  assert.equal(rail.style["--toc-rail-progress"], "0.2514");
   assert.equal(fill.style["--toc-rail-progress"], "0.2514");
 
   handle.unmount();

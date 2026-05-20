@@ -1,6 +1,6 @@
 {
   "name": "toc-rail",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sticky reading rail with table-of-contents, scroll progress, and active heading state. Vanilla, ESM, zero dependencies.",
   "type": "module",
   "license": "MIT",

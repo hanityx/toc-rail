@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Added the GitHub Pages demo entry and public demo homepage metadata.
+- Fixed the public demo to load the published package module on GitHub Pages.
+- Exposed `data-toc-rail-progress` and `--toc-rail-progress` on the root rail for easier debugging.
+- Avoided the demo favicon 404 and stabilized the browser smoke fixture layout.
+
 ## 0.1.0
 
 - Initial release.
