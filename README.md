@@ -2,6 +2,8 @@
 
 Sticky reading rail for long articles — TOC links, scroll progress, and active heading state. Vanilla TypeScript, ESM-only, zero dependencies.
 
+[Live demo](https://hanityx.github.io/toc-rail/) · [npm](https://www.npmjs.com/package/toc-rail)
+
 ![toc-rail demo](https://raw.githubusercontent.com/hanityx/toc-rail/main/demo/demo.png)
 
 ```sh
@@ -36,9 +38,13 @@ change after a re-render.
 | `ariaLabel` | `string` | title text or `"Table of contents"` | Accessible label on the nav element. |
 | `minWidth` | `number` | `1140` | Hide below this viewport width (px). |
 | `topOffset` | `number` | `52` | Fixed header height for scroll math. |
-| `activeOffset` | `number` | `32` | Extra offset for deciding the active heading. |
+| `activeBoundary` | `"viewport-start" \| "viewport-end"` | `"viewport-start"` | Boundary used for deciding the active heading. |
+| `activeOffset` | `number` | `32` | Extra offset for deciding the active heading. With `viewport-end`, this is distance above the bottom edge. |
+| `progressMode` | `"outline" \| "content"` | `"outline"` | `outline` follows the active TOC item. `content` fills by article reading progress. |
 | `edge.hideBefore` | `boolean` | `true` | Hide before the article enters the viewport. |
 | `edge.hideAfter` | `boolean` | `true` | Hide after the article leaves the viewport. |
+| `edge.afterBoundary` | `"viewport-start" \| "viewport-end"` | `"viewport-start"` | Boundary used for after-content fade. Use `viewport-end` to fade when the article end reaches the bottom of the viewport. |
+| `edge.afterOffset` | `number` | `0` | Extra distance after the after-boundary before fade starts. |
 | `edge.beforeOffset` | `number` | `120` | Before-content threshold (px). |
 | `edge.afterFadeDistance` | `number` | `160` | Fade distance (px) near the article end. |
 | `classes` | `object` | — | Extra class hooks: `root`, `link`, `activeItem`. |
@@ -48,8 +54,6 @@ change after a re-render.
 | `environment.window` | `Window` | global window | Advanced testing/adapter escape hatch. |
 
 Progress-only mode ignores navigation-only options like link classes and active item classes.
-
-Live example: [demo](https://hanityx.github.io/toc-rail/)
 
 ## Styling
 

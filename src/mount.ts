@@ -134,19 +134,16 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
     const visualState = computeVisualState(metrics, options);
     const activeIndex = findActiveHeadingIndex(headingData, win, options);
     syncActiveItemVisibility(view, itemData, activeIndex);
-    const progress =
-      itemData.length > 0
-        ? getOutlineProgress(
-            view,
-            itemData,
-            headingData,
-            activeIndex,
-            metrics,
-            win,
-            options,
-            visualState.progress
-          )
-        : visualState.progress;
+    const progress = getProgress({
+      activeIndex,
+      headings: headingData,
+      items: itemData,
+      metrics,
+      options,
+      fallbackProgress: visualState.progress,
+      view,
+      win
+    });
 
     currentProgress = progress;
     currentActiveId = applyActiveItem(itemData, activeIndex, options);
@@ -187,6 +184,61 @@ export function mountTocRail(options: TocRailOptions): TocRailInstance {
 
 function resolveElement(target: string | Element, doc: Document): Element | null {
   return typeof target === "string" ? doc.querySelector(target) : target;
+}
+
+function getViewportContentProgress(
+  metrics: ReturnType<typeof measureRailMetrics>,
+  options: TocRailOptions
+): number {
+  const topOffset = options.topOffset ?? DEFAULT_TOP_OFFSET;
+  const activeOffset = options.activeOffset ?? DEFAULT_ACTIVE_OFFSET;
+  const contentTop = metrics.contentRect.top + metrics.scrollY;
+  const contentHeight = Math.max(metrics.scrollHeight || metrics.contentRect.height, 1);
+  const contentEnd = contentTop + contentHeight;
+  const progressPoint =
+    options.activeBoundary === "viewport-end"
+      ? metrics.scrollY + metrics.innerHeight - activeOffset
+      : metrics.scrollY + topOffset;
+
+  if (contentEnd <= contentTop) return progressPoint >= contentTop ? 1 : 0;
+  return clamp((progressPoint - contentTop) / (contentEnd - contentTop), 0, 1);
+}
+
+function getProgress({
+  activeIndex,
+  headings,
+  items,
+  metrics,
+  options,
+  fallbackProgress,
+  view,
+  win
+}: {
+  activeIndex: number;
+  headings: readonly InternalTocRailHeading[];
+  items: readonly TocRailItem[];
+  metrics: ReturnType<typeof measureRailMetrics>;
+  options: TocRailOptions;
+  fallbackProgress: number;
+  view: ReturnType<typeof createTocRailView>;
+  win: Window;
+}): number {
+  if (options.progressMode === "content") {
+    return getViewportContentProgress(metrics, options);
+  }
+
+  if (items.length === 0) return fallbackProgress;
+
+  return getOutlineProgress(
+    view,
+    items,
+    headings,
+    activeIndex,
+    metrics,
+    win,
+    options,
+    fallbackProgress
+  );
 }
 
 function syncActiveItemVisibility(
@@ -240,9 +292,11 @@ function getOutlineProgress(
   const currentCenter = getLinkCenter(items[activeIndex]!.link);
   let targetCenter = currentCenter;
   const activePoint =
-    win.scrollY +
-    (options.topOffset ?? DEFAULT_TOP_OFFSET) +
-    (options.activeOffset ?? DEFAULT_ACTIVE_OFFSET);
+    options.activeBoundary === "viewport-end"
+      ? win.scrollY + win.innerHeight - (options.activeOffset ?? DEFAULT_ACTIVE_OFFSET)
+      : win.scrollY +
+        (options.topOffset ?? DEFAULT_TOP_OFFSET) +
+        (options.activeOffset ?? DEFAULT_ACTIVE_OFFSET);
 
   const nextHeading = headings[activeIndex + 1];
   const nextItem = items[activeIndex + 1];

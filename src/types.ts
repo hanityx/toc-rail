@@ -23,10 +23,14 @@ export interface TocRailOptions {
   ariaLabel?: string;
   minWidth?: number;
   topOffset?: number;
+  activeBoundary?: "viewport-start" | "viewport-end";
   activeOffset?: number;
+  progressMode?: "outline" | "content";
   edge?: {
     hideBefore?: boolean;
     hideAfter?: boolean;
+    afterBoundary?: "viewport-start" | "viewport-end";
+    afterOffset?: number;
     beforeOffset?: number;
     afterFadeDistance?: number;
   };

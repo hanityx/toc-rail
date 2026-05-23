@@ -235,6 +235,43 @@ test("mountTocRail mounts an accessible text outline with progress", () => {
   assert.equal(body.children.length, 0);
 });
 
+test("mountTocRail can use viewport content progress instead of outline progress", () => {
+  const { window } = createDom();
+
+  const handle = mountTocRail({
+    content: "article",
+    progressMode: "content",
+    environment: { window }
+  });
+
+  assert.equal(handle.progress, 0.2514);
+  assert.equal(handle.element.dataset.tocRailProgress, "0.2514");
+
+  handle.unmount();
+});
+
+test("mountTocRail can align content progress to the viewport-end active point", () => {
+  const { article, window } = createDom();
+
+  const handle = mountTocRail({
+    content: "article",
+    progressMode: "content",
+    activeBoundary: "viewport-end",
+    activeOffset: 120,
+    environment: { window }
+  });
+
+  assert.equal(handle.progress, 0.5571);
+
+  window.scrollY = 1020;
+  article._rect = { top: -920, height: 1400, bottom: 480 };
+  handle.update();
+  assert.equal(handle.progress, 1);
+  assert.equal(handle.element.dataset.tocRailProgress, "1");
+
+  handle.unmount();
+});
+
 test("mountTocRail updates active heading, min-width visibility, and cleanup", () => {
   const { body, h3, listeners, window } = createDom();
   window.innerWidth = 800;
@@ -423,6 +460,84 @@ test("mountTocRail applies consistent before-content and after-content visibilit
   assert.equal(rail.dataset.tocRailState, "visible");
   assert.equal(rail.style["--toc-rail-edge-opacity"], "1");
 
+  handle.unmount();
+});
+
+test("mountTocRail can fade after content at the viewport end", () => {
+  const { article, body, window } = createDom();
+  const handle = mountTocRail({
+    content: "article",
+    edge: { hideBefore: false, afterBoundary: "viewport-end", afterFadeDistance: 160 },
+    environment: { window }
+  });
+
+  const rail = body.children[0];
+
+  article._rect = { top: -6000, height: 6600, bottom: 620 };
+  handle.update();
+  assert.equal(rail.dataset.tocRailState, "visible");
+  assert.equal(rail.style["--toc-rail-edge-opacity"], "1");
+
+  article._rect = { top: -6080, height: 6600, bottom: 520 };
+  handle.update();
+  assert.equal(rail.dataset.tocRailState, "fading-after");
+  assert.equal(rail.style["--toc-rail-edge-opacity"], "0.5");
+  assert.equal(rail.getAttribute("aria-hidden"), undefined);
+
+  article._rect = { top: -6170, height: 6600, bottom: 430 };
+  handle.update();
+  assert.equal(rail.dataset.tocRailState, "hidden-after");
+  assert.equal(rail.getAttribute("aria-hidden"), "true");
+
+  handle.unmount();
+});
+
+test("mountTocRail can delay after-content fade with an offset", () => {
+  const { article, body, window } = createDom();
+  const handle = mountTocRail({
+    content: "article",
+    edge: {
+      hideBefore: false,
+      afterBoundary: "viewport-end",
+      afterOffset: 120,
+      afterFadeDistance: 160
+    },
+    environment: { window }
+  });
+
+  const rail = body.children[0];
+
+  article._rect = { top: -6080, height: 6600, bottom: 520 };
+  handle.update();
+  assert.equal(rail.dataset.tocRailState, "visible");
+  assert.equal(rail.style["--toc-rail-edge-opacity"], "1");
+
+  article._rect = { top: -6200, height: 6600, bottom: 400 };
+  handle.update();
+  assert.equal(rail.dataset.tocRailState, "fading-after");
+  assert.equal(rail.style["--toc-rail-edge-opacity"], "0.5");
+
+  article._rect = { top: -6290, height: 6600, bottom: 310 };
+  handle.update();
+  assert.equal(rail.dataset.tocRailState, "hidden-after");
+  assert.equal(rail.getAttribute("aria-hidden"), "true");
+
+  handle.unmount();
+});
+
+test("mountTocRail can choose the active heading from the viewport end", () => {
+  const { h3, window } = createDom();
+  window.scrollY = 1000;
+  h3._rect.top = 320;
+
+  const handle = mountTocRail({
+    content: "article",
+    activeBoundary: "viewport-end",
+    activeOffset: 160,
+    environment: { window }
+  });
+
+  assert.equal(handle.activeId, "already%20encoded");
   handle.unmount();
 });
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Added `progressMode: "content"` for article-height reading progress instead of outline-item progress.
+- Added `activeBoundary: "viewport-end"` so active heading and progress can follow the lower viewport edge.
+- Added `edge.afterBoundary` and `edge.afterOffset` for smoother after-content fade timing.
+- Moved the live demo link to the top of the README.
+
 ## 0.1.3
 
 - Fixed rail sizing at shorter viewport heights so the panel and list stay inside the viewport.

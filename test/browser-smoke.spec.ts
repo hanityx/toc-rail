@@ -384,6 +384,119 @@ test("browser fixture covers progress-only, encoded fragments, and hidden state 
   await expect(hiddenRail.locator(".toc-rail__link")).toHaveAttribute("tabindex", "-1");
 });
 
+test("viewport-end content progress stays synced in a real browser layout", async ({ page }) => {
+  await page.goto(`${baseUrl}/demo/index.html`);
+
+  await page.evaluate(async () => {
+    document.body.innerHTML =
+      '<main style="width:min(100%,1120px);margin:0 auto;padding:64px 24px 120vh"><article id="viewport-content" style="width:min(100%,680px)"><h1>Viewport content</h1></article></main>';
+    const article = document.querySelector("#viewport-content");
+    if (!article) throw new Error("Missing viewport content article.");
+
+    for (let index = 1; index <= 8; index += 1) {
+      const heading = document.createElement("h2");
+      heading.id = `viewport-section-${index}`;
+      heading.textContent = `Viewport section ${index}`;
+      heading.style.marginTop = index === 1 ? "96px" : "420px";
+      heading.style.scrollMarginTop = "84px";
+
+      const paragraph = document.createElement("p");
+      paragraph.textContent = "Body ".repeat(140);
+      article.append(heading, paragraph);
+    }
+
+    const { mountTocRail } = (await window.eval('import("/dist/index.js")')) as typeof import("../dist/index.js");
+    mountTocRail({
+      content: "#viewport-content",
+      headings: "#viewport-content h2[id]",
+      title: false,
+      minWidth: 800,
+      topOffset: 56,
+      activeBoundary: "viewport-end",
+      activeOffset: 120,
+      progressMode: "content",
+      edge: {
+        hideBefore: false,
+        afterBoundary: "viewport-end",
+        afterOffset: 120,
+        afterFadeDistance: 160
+      }
+    });
+
+    document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
+    document.body.style.setProperty("scroll-behavior", "auto", "important");
+  });
+
+  const rail = page.locator("[data-toc-rail='true']");
+  await expect(rail).toBeVisible();
+
+  const samples = await page.evaluate(async () => {
+    const article = document.querySelector<HTMLElement>("#viewport-content");
+    if (!article) throw new Error("Missing viewport content article.");
+    const articleTop = article.getBoundingClientRect().top + window.scrollY;
+    const articleEnd = articleTop + Math.max(article.scrollHeight, article.getBoundingClientRect().height);
+    const results: Array<{
+      expected: number;
+      progress: number;
+      activeHref: string | null;
+      state: string | null;
+    }> = [];
+
+    for (const sectionId of ["viewport-section-1", "viewport-section-4", "viewport-section-8"]) {
+      const heading = document.getElementById(sectionId);
+      if (!heading) throw new Error(`Missing heading ${sectionId}`);
+      window.scrollTo(0, Math.max(0, heading.getBoundingClientRect().top + window.scrollY - window.innerHeight + 120));
+      window.dispatchEvent(new Event("scroll"));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const rail = document.querySelector<HTMLElement>("[data-toc-rail='true']");
+      const active = document.querySelector<HTMLAnchorElement>("[data-toc-rail-active='true'] a");
+      const progress = Number(rail?.getAttribute("data-toc-rail-progress"));
+      const progressPoint = window.scrollY + window.innerHeight - 120;
+      const expected = Math.min(1, Math.max(0, Number(((progressPoint - articleTop) / (articleEnd - articleTop)).toFixed(4))));
+      results.push({
+        expected,
+        progress,
+        activeHref: active?.getAttribute("href") ?? null,
+        state: rail?.getAttribute("data-toc-rail-state") ?? null
+      });
+    }
+
+    return results;
+  });
+
+  for (const sample of samples) {
+    expect(sample.state).toBe("visible");
+    expect(sample.progress).toBeCloseTo(sample.expected, 3);
+  }
+  expect(samples.map((sample) => sample.activeHref)).toEqual([
+    "#viewport-section-1",
+    "#viewport-section-4",
+    "#viewport-section-8"
+  ]);
+
+  const afterContent = await page.evaluate(async () => {
+    const article = document.querySelector<HTMLElement>("#viewport-content");
+    if (!article) throw new Error("Missing viewport content article.");
+    const articleBottom = article.getBoundingClientRect().bottom + window.scrollY;
+    window.scrollTo(0, articleBottom - window.innerHeight + 240);
+    window.dispatchEvent(new Event("scroll"));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const rail = document.querySelector<HTMLElement>("[data-toc-rail='true']");
+    return {
+      progress: Number(rail?.getAttribute("data-toc-rail-progress")),
+      state: rail?.getAttribute("data-toc-rail-state") ?? null,
+      opacity: Number(rail?.style.getPropertyValue("--toc-rail-edge-opacity"))
+    };
+  });
+
+  expect(afterContent.progress).toBe(1);
+  expect(afterContent.state).toBe("fading-after");
+  expect(afterContent.opacity).toBeGreaterThan(0);
+  expect(afterContent.opacity).toBeLessThan(1);
+});
+
 test("long outlines keep the active item visible and synced", async ({ page }) => {
   await page.goto(`${baseUrl}/demo/index.html`);
 

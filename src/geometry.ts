@@ -77,8 +77,11 @@ export function findActiveHeadingIndex(
   win: Window,
   options: TocRailOptions
 ): number {
+  const activeOffset = options.activeOffset ?? DEFAULT_ACTIVE_OFFSET;
   const activePoint =
-    win.scrollY + (options.topOffset ?? DEFAULT_TOP_OFFSET) + (options.activeOffset ?? DEFAULT_ACTIVE_OFFSET);
+    options.activeBoundary === "viewport-end"
+      ? win.scrollY + win.innerHeight - activeOffset
+      : win.scrollY + (options.topOffset ?? DEFAULT_TOP_OFFSET) + activeOffset;
   let activeIndex = -1;
 
   for (let index = 0; index < headings.length; index += 1) {
@@ -109,7 +112,10 @@ function calculateAfterFade(
   }
 
   const fadeDistance = Math.max(options.edge?.afterFadeDistance ?? DEFAULT_AFTER_FADE_DISTANCE, 1);
-  const afterDistance = topOffset - getRectBottom(metrics.contentRect);
+  const afterBoundary =
+    options.edge?.afterBoundary === "viewport-end" ? metrics.innerHeight : topOffset;
+  const afterOffset = options.edge?.afterOffset ?? 0;
+  const afterDistance = afterBoundary - getRectBottom(metrics.contentRect) - afterOffset;
   const opacity = 1 - clamp(afterDistance / fadeDistance, 0, 1);
   return {
     opacity,

@@ -71,7 +71,16 @@ try {
       import { mountReadingRail, mountTocRail, type TocRailHeading, type TocRailInstance, type TocRailOptions } from "toc-rail";
       import "toc-rail/style.css";
 
-      const options: TocRailOptions = { content: document.body, headings: false };
+      const options: TocRailOptions = {
+        content: document.body,
+        headings: false,
+        activeBoundary: "viewport-end",
+        progressMode: "content",
+        edge: {
+          afterBoundary: "viewport-end",
+          afterOffset: 120
+        }
+      };
       const rail: TocRailInstance = mountTocRail(options);
       const alias: typeof mountTocRail = mountReadingRail;
       const headings: readonly TocRailHeading[] = rail.headings;
